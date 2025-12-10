@@ -1,0 +1,77 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 353 100% 98%; /* A very light, almost white pink */
+    --foreground: 353 30% 10%; /* A very dark, desaturated pink/brown */
+
+    --card: 353 80% 96%;
+    --card-foreground: 353 30% 10%;
+
+    --popover: 353 100% 98%;
+    --popover-foreground: 353 30% 10%;
+
+    --primary: 340 82% 60%; /* A vibrant, warm pink */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 350 50% 94%;
+    --secondary-foreground: 353 30% 10%;
+
+    --muted: 350 40% 90%;
+    --muted-foreground: 353 25% 45%;
+
+    --accent: 350 60% 92%;
+    --accent-foreground: 353 30% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 350 40% 88%;
+    --input: 350 40% 90%;
+    --ring: 340 82% 60%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 353 40% 10%; /* Dark reddish-brown */
+    --foreground: 353 100% 98%;
+
+    --card: 353 35% 15%;
+    --card-foreground: 353 100% 98%;
+
+    --popover: 353 40% 10%;
+    --popover-foreground: 353 100% 98%;
+
+    --primary: 340 82% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 350 30% 20%;
+    --secondary-foreground: 353 100% 98%;
+
+    --muted: 350 25% 22%;
+    --muted-foreground: 353 25% 65%;
+
+    --accent: 350 30% 20%;
+    --accent-foreground: 353 100% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 350 25% 25%;
+    --input: 350 25% 22%;
+    --ring: 340 82% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

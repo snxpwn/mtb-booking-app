@@ -1,0 +1,46 @@
+{
+  "placeholderImages": [
+    {
+      "id": "classic-lashes",
+      "description": "A close-up of classic eyelash extensions, looking natural and elegant.",
+      "imageUrl": "https://images.unsplash.com/photo-1584846969629-fa7b839b1bd3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxleWVsYXNoJTIwY2xhc3NpY3xlbnwwfHx8fDE3NjUyMzU2ODB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "eyelash classic"
+    },
+    {
+      "id": "hybrid-lashes",
+      "description": "A close-up of hybrid eyelash extensions, a mix of classic and volume for a fuller look.",
+      "imageUrl": "https://images.unsplash.com/photo-1732229036920-12c917c117a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxleWVsYXNoJTIwaHlicmlkfGVufDB8fHx8MTc2NTIzNTY4MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "eyelash hybrid"
+    },
+    {
+      "id": "volume-lashes",
+      "description": "A close-up of dramatic volume eyelash extensions, creating a bold and full look.",
+      "imageUrl": "https://images.unsplash.com/photo-1730226995154-efe9e13db300?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxleWVsYXNoJTIwdm9sdW1lfGVufDB8fHx8MTc2NTIzNTY4MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "eyelash volume"
+    },
+    {
+      "id": "gallery-1",
+      "description": "A beautiful close-up of an eye with long, full eyelash extensions.",
+      "imageUrl": "https://i.ibb.co/q3kf85sW/IMG-5139.jpg",
+      "imageHint": "eyelash portfolio"
+    },
+    {
+      "id": "gallery-2",
+      "description": "A model showing off her eyelash extensions.",
+      "imageUrl": "https://i.ibb.co/VYdXMB0m/IMG-5140.jpg",
+      "imageHint": "beauty model"
+    },
+    {
+      "id": "gallery-3",
+      "description": "Side profile showcasing the curl and length of eyelash extensions.",
+      "imageUrl": "https://i.ibb.co/qM2cTn1w/IMG-5141.jpg",
+      "imageHint": "eyelash curl"
+    },
+    {
+      "id": "hero-background",
+      "description": "A stylish, abstract background with soft pink and gold tones.",
+      "imageUrl": "https://images.unsplash.com/photo-1587989599587-a27071f5e2d1?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "abstract beauty"
+    }
+  ]
+}
