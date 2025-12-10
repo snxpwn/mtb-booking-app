@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -18,8 +19,8 @@ export default function ChatBubble() {
       <Button
         size="icon"
         className={cn(
-          "fixed bottom-24 md:bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50 transition-transform duration-300 ease-in-out",
-          isOpen ? "bg-muted text-muted-foreground scale-90" : "animate-pulse"
+          "fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50 transition-transform duration-300 ease-in-out",
+          isOpen ? "bg-muted text-muted-foreground scale-90" : "bg-primary text-primary-foreground animate-pulse"
         )}
         onClick={toggleChat}
         aria-label={isOpen ? "Close chat" : "Open chat assistant"}

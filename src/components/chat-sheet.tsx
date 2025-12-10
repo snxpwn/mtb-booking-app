@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -73,14 +74,17 @@ export default function ChatSheet({ isOpen, onOpenChange }: ChatSheetProps) {
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="flex flex-col p-0" side="bottom">
-        <SheetHeader className="p-4 border-b text-center">
-          <SheetTitle className="flex items-center justify-center gap-2">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent 
+        className="fixed bottom-[5.5rem] right-6 flex h-[70vh] max-h-[70vh] w-[90vw] max-w-sm flex-col p-0 shadow-2xl rounded-xl border-border"
+        showCloseButton={false}
+      >
+        <DialogHeader className="p-4 border-b text-center">
+          <DialogTitle className="flex items-center justify-center gap-2">
             <Logo className="text-2xl" /> Assistant
-          </SheetTitle>
-           <SheetDescription>Your personal booking helper</SheetDescription>
-        </SheetHeader>
+          </DialogTitle>
+           <DialogDescription>Your personal booking helper</DialogDescription>
+        </DialogHeader>
 
         <ScrollArea className="flex-1" ref={scrollAreaRef}>
            <div className="p-4 space-y-6">
@@ -158,7 +162,7 @@ export default function ChatSheet({ isOpen, onOpenChange }: ChatSheetProps) {
             </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
