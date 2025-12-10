@@ -1,19 +1,26 @@
-# Settings to manage and configure a Firebase App Hosting backend.
-# https://firebase.google.com/docs/app-hosting/configure
-
+# Settings for App Hosting
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
-  availableSecrets:
-    - secret: GEMINI_API_KEY
-    - secret: GMAIL_EMAIL
-    - secret: GMAIL_APP_PASSWORD
-    - secret: ADMIN_EMAIL
-    - secret: SERVICE_ACCOUNT_KEY_JSON
   environmentVariables:
-    GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-    GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
-    GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-    ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-    SERVICE_ACCOUNT_KEY_JSON: ${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}
+    - variable: BUSINESS_NAME
+      value: "MTB - More Than Beauty"
+    - variable: BUSINESS_ADDRESS
+      value: "Watford, UK"
+    - variable: BUSINESS_CONTACT
+      value: "07123456789"
+    - variable: INSTAGRAM_HANDLE
+      value: "@mtb"
+    - variable: TIKTOK_HANDLE
+      value: "@mtb"
+    - variable: ADMIN_PIN
+      value: "1825"
+  secrets:
+    - variable: SERVICE_ACCOUNT_KEY_JSON
+      secret: SERVICE_ACCOUNT_KEY_JSON
+    - variable: GEMINI_API_KEY
+      secret: GEMINI_API_KEY
+    - variable: GMAIL_EMAIL
+      secret: GMAIL_EMAIL
+    - variable: GMAIL_APP_PASSWORD
+      secret: GMAIL_APP_PASSWORD
+    - variable: ADMIN_EMAIL
+      secret: ADMIN_EMAIL
