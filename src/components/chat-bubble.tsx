@@ -19,7 +19,7 @@ export default function ChatBubble() {
       <Button
         size="icon"
         className={cn(
-          "fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50 transition-transform duration-300 ease-in-out",
+          "fixed bottom-20 right-6 w-14 h-14 rounded-full shadow-lg z-50 transition-transform duration-300 ease-in-out md:bottom-6",
           isOpen ? "bg-muted text-muted-foreground scale-90" : "bg-primary text-primary-foreground animate-pulse"
         )}
         onClick={toggleChat}

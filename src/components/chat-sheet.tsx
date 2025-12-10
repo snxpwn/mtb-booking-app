@@ -76,7 +76,7 @@ export default function ChatSheet({ isOpen, onOpenChange }: ChatSheetProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="fixed bottom-[5.5rem] right-6 flex h-[70vh] max-h-[70vh] w-[90vw] max-w-sm flex-col p-0 shadow-2xl rounded-xl border-border"
+        className="fixed bottom-24 right-6 flex h-[70vh] max-h-[70vh] w-[90vw] max-w-sm flex-col p-0 shadow-2xl rounded-xl border-border md:bottom-24"
         showCloseButton={false}
       >
         <DialogHeader className="p-4 border-b text-center">
