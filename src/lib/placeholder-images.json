@@ -37,6 +37,30 @@
       "imageHint": "eyelash curl"
     },
     {
+      "id": "gallery-4",
+      "description": "Close-up of volume lash extensions",
+      "imageUrl": "https://i.ibb.co/k2cdcdgD/cbc93247-bf04-4cb9-b2e2-af2c60c83352.jpg",
+      "imageHint": "eyelash volume"
+    },
+    {
+      "id": "gallery-5",
+      "description": "Full set of hybrid lashes",
+      "imageUrl": "https://i.ibb.co/SwnSq6fn/f31b3e16-4cd6-4c50-993d-9737ccb2f04f.jpg",
+      "imageHint": "eyelash hybrid"
+    },
+    {
+      "id": "gallery-6",
+      "description": "Client selfie showing off new lashes",
+      "imageUrl": "https://i.ibb.co/Q7HjwQ1S/6c101389-ac5e-4c21-bb9f-19a9aa601cca.jpg",
+      "imageHint": "eyelash selfie"
+    },
+    {
+      "id": "gallery-7",
+      "description": "Close-up detail of lash application",
+      "imageUrl": "https://i.ibb.co/vMM03xt/5d5261f1-c4ca-4a13-80df-b4857a0220d3.jpg",
+      "imageHint": "eyelash detail"
+    },
+    {
       "id": "hero-background",
       "description": "A stylish, abstract background with soft pink and gold tones.",
       "imageUrl": "https://images.unsplash.com/photo-1587989599587-a27071f5e2d1?q=80&w=2070&auto=format&fit=crop",

@@ -20,7 +20,7 @@ export default function HeroSection() {
       {heroImage && (
          <Image
             src={heroImage.imageUrl}
-            alt={heroImage.description}
+            alt=""
             fill
             className="object-cover object-center z-[-1] opacity-20"
             data-ai-hint={heroImage.imageHint}

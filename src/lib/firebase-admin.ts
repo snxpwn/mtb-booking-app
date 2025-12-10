@@ -11,11 +11,20 @@ function initializeAdminApp() {
   const serviceAccountKeyString = process.env.SERVICE_ACCOUNT_KEY_JSON;
 
   if (!serviceAccountKeyString) {
-    throw new Error('SERVICE_ACCOUNT_KEY_JSON is not set. The Admin SDK cannot be initialized. Please add it to your .env file and Firebase Functions config.');
+    // Return early instead of throwing, so the app doesn't crash on start.
+    // We will throw when accessing adminDb if it's undefined.
+    console.error('CRITICAL ERROR: SERVICE_ACCOUNT_KEY_JSON environment variable is not set.');
+    return;
   }
 
   try {
-    const serviceAccount = JSON.parse(serviceAccountKeyString);
+    let serviceAccount;
+    try {
+        serviceAccount = JSON.parse(serviceAccountKeyString);
+    } catch (e: any) {
+        console.error('CRITICAL ERROR: Failed to parse SERVICE_ACCOUNT_KEY_JSON. It might be malformed.');
+        return;
+    }
 
     // This is the crucial fix: Ensure newline characters in the private key are correctly interpreted.
     if (serviceAccount.private_key) {
@@ -28,29 +37,24 @@ function initializeAdminApp() {
     console.log("Firebase Admin SDK initialized successfully.");
     adminDb = admin.firestore();
   } catch (error: any) {
-    if (error instanceof SyntaxError) {
-      throw new Error(`Firebase Admin initialization error: Failed to parse SERVICE_ACCOUNT_KEY_JSON. Please ensure it is a valid, single-line JSON string. Original error: ${error.message}`);
-    } else if (error.code === 'app/duplicate-app') {
-      if (!admin.apps[0]) {
-        throw new Error("Firebase Admin SDK reported a duplicate app, but no app was found. This is an unexpected state.");
-      }
+    if (error.code === 'app/duplicate-app') {
       adminDb = admin.firestore();
     } else {
-      // Pass along the specific initialization error.
-      throw new Error(`Firebase Admin initialization error: ${error.message}`);
+      console.error(`Firebase Admin initialization error: ${error.message}`);
     }
   }
 }
 
-try {
-  initializeAdminApp();
-} catch (error: any) {
-  console.error("CRITICAL: Failed to initialize Firebase Admin SDK. The application will not function correctly.", error);
-  // In a real app, you might want to prevent the app from starting or have a safe fallback,
-  // but for now, logging the critical error is essential.
-  // We re-throw the error to ensure the problem is visible during server startup.
-  throw error;
-}
+// Attempt initialization
+initializeAdminApp();
 
+// Safe accessor that throws a meaningful error if DB is not ready
+export const getAdminDb = () => {
+    if (!adminDb) {
+        throw new Error('Database connection failed. The server is missing the SERVICE_ACCOUNT_KEY_JSON configuration.');
+    }
+    return adminDb;
+};
 
+// Export direct access for backward compatibility, but it might be undefined
 export { adminDb };

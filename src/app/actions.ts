@@ -4,7 +4,7 @@
 import { processBooking, processCancellation, getBookingDetails } from '@/ai/flows/booking-flow';
 import { converse } from '@/ai/flows/assistant-flow';
 import type { BookingResponse, ConverseRequest, ConverseResponse } from '@/lib/schemas';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 import { bookingSchema } from '@/lib/schemas';
 import { z } from 'zod';
 
@@ -62,22 +62,30 @@ export async function askAssistant(
  * Fetches all bookings from Firestore for the admin dashboard.
  */
 export async function getBookings() {
-    const snapshot = await adminDb.collection('bookings').orderBy('createdAt', 'desc').get();
-    if (snapshot.empty) {
+    try {
+        const db = getAdminDb();
+        const snapshot = await db.collection('bookings').orderBy('createdAt', 'desc').get();
+        if (snapshot.empty) {
+            return [];
+        }
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Error fetching bookings:", error);
+        // Return empty array instead of crashing, but log the error
         return [];
     }
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 /**
  * Deletes all bookings from the Firestore collection.
  */
 export async function deleteAllBookings(): Promise<void> {
-    const snapshot = await adminDb.collection('bookings').get();
+    const db = getAdminDb();
+    const snapshot = await db.collection('bookings').get();
     if (snapshot.empty) {
         return;
     }
-    const batch = adminDb.batch();
+    const batch = db.batch();
     snapshot.docs.forEach(doc => {
         batch.delete(doc.ref);
     });
@@ -88,12 +96,14 @@ export async function deleteAllBookings(): Promise<void> {
  * Deletes a single booking by its document ID.
  */
 export async function deleteBooking(id: string): Promise<void> {
-    await adminDb.collection('bookings').doc(id).delete();
+    const db = getAdminDb();
+    await db.collection('bookings').doc(id).delete();
 }
 
 /**
  * Updates the status of a single booking.
  */
 export async function updateBookingStatus(id: string, status: 'confirmed' | 'cancelled' | 'completed'): Promise<void> {
-    await adminDb.collection('bookings').doc(id).update({ status });
+    const db = getAdminDb();
+    await db.collection('bookings').doc(id).update({ status });
 }

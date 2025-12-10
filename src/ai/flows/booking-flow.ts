@@ -16,7 +16,7 @@ import {
   type BookingResponse,
 } from '@/lib/schemas';
 import { sendEmail } from '@/lib/email';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 async function generateBookingNumber(): Promise<string> {
   // Generate a random 5-digit number
@@ -33,7 +33,8 @@ export async function processBooking(
   
   // Save to Firestore
   try {
-      await adminDb.collection('bookings').doc(bookingNumber).set({
+      const db = getAdminDb();
+      await db.collection('bookings').doc(bookingNumber).set({
           ...input,
           bookingNumber,
           createdAt: new Date().toISOString(),
@@ -45,7 +46,7 @@ export async function processBooking(
       if (error.message.includes('Firebase Admin SDK is not initialized') || error.message.includes('service account')) {
           throw new Error(`Server configuration error: The app cannot connect to the database because the FIREBASE_SERVICE_ACCOUNT_KEY is missing or invalid. Please check your .env file and server logs. Details: ${error.message}`);
       }
-      throw new Error('Failed to save booking to the database.');
+      throw new Error(`Failed to save booking to the database. ${error.message}`);
   }
 
   return await processBookingFlow({ ...input, bookingNumber });
@@ -53,7 +54,8 @@ export async function processBooking(
 
 export async function getBookingDetails(bookingNumber: string) {
     try {
-        const doc = await adminDb.collection('bookings').doc(bookingNumber).get();
+        const db = getAdminDb();
+        const doc = await db.collection('bookings').doc(bookingNumber).get();
         if (doc.exists) {
             return doc.data();
         } else {
@@ -331,7 +333,8 @@ const processCancellationFlow = ai.defineFlow(
   },
   async (bookingNumber) => {
     // 1. Get booking from DB
-    const bookingDoc = await adminDb.collection('bookings').doc(bookingNumber).get();
+    const db = getAdminDb();
+    const bookingDoc = await db.collection('bookings').doc(bookingNumber).get();
     
     if (!bookingDoc.exists) {
         throw new Error(`No booking found with this reference: ${bookingNumber}`);
@@ -344,7 +347,7 @@ const processCancellationFlow = ai.defineFlow(
     }
 
     // 2. Cancel booking in DB (update status)
-    await adminDb.collection('bookings').doc(bookingNumber).update({
+    await db.collection('bookings').doc(bookingNumber).update({
         status: 'cancelled'
     });
 
