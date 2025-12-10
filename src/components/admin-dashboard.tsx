@@ -94,11 +94,21 @@ export default function AdminDashboard() {
     setError(null);
     try {
       const fetchedBookings = (await getBookings()) as Booking[];
+      if (!Array.isArray(fetchedBookings)) {
+        // This handles cases where the server action might fail and not return an array
+        throw new Error('Received invalid data for bookings.');
+      }
       setBookings(fetchedBookings);
 
       const lastLogin = localStorage.getItem('lastAdminLogin');
       if (lastLogin) {
-        const newSinceLastLogin = fetchedBookings.filter(b => new Date(b.createdAt) > new Date(lastLogin));
+        const newSinceLastLogin = fetchedBookings.filter(b => {
+            try {
+                return new Date(b.createdAt) > new Date(lastLogin);
+            } catch {
+                return false; // Ignore invalid dates
+            }
+        });
         setNewBookings(newSinceLastLogin);
         if (newSinceLastLogin.length > 0) {
             setShowNewBookingsModal(true);
@@ -108,7 +118,7 @@ export default function AdminDashboard() {
       localStorage.setItem('lastAdminLogin', new Date().toISOString());
 
     } catch (err: any) {
-      setError('Failed to fetch bookings. Please ensure the server is configured correctly and try again.');
+      setError(err.message || 'Failed to fetch bookings. Please ensure the server is configured correctly and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -210,7 +220,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
         <Alert variant="destructive" className="max-w-md">
           <ShieldAlert className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Access Denied</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </div>
