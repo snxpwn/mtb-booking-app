@@ -19,6 +19,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -54,6 +55,13 @@ import {
   MessageSquare,
   Bell,
   X,
+  User,
+  Mail,
+  Phone,
+  Tag,
+  Calendar,
+  Clock,
+  Notebook
 } from 'lucide-react';
 import {
   getBookings,
@@ -104,7 +112,8 @@ export default function AdminDashboard() {
       if (lastLogin) {
         const newSinceLastLogin = fetchedBookings.filter(b => {
             try {
-                return new Date(b.createdAt) > new Date(lastLogin);
+                // Ensure createdAt is a valid date string before creating a Date object
+                return b.createdAt && new Date(b.createdAt) > new Date(lastLogin);
             } catch {
                 return false; // Ignore invalid dates
             }
@@ -147,7 +156,7 @@ export default function AdminDashboard() {
         b.service,
         b.date,
         b.status,
-        new Date(b.createdAt).toLocaleDateString(),
+        b.createdAt ? new Date(b.createdAt).toLocaleDateString() : 'N/A',
       ]),
     });
     doc.save('bookings.pdf');
@@ -203,7 +212,7 @@ export default function AdminDashboard() {
   };
 
   const filteredBookings = bookings.filter(booking =>
-    booking.bookingNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    (booking.bookingNumber || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
@@ -240,10 +249,61 @@ export default function AdminDashboard() {
     }
   };
 
+  const BookingActionsMenu = ({ booking }: { booking: Booking }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => handleSendWhatsApp(booking)}>
+          <MessageSquare className="mr-2 h-4 w-4" />
+          Send WhatsApp
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleMarkAsComplete(booking.id, booking.bookingNumber)}
+          disabled={booking.status === 'completed'}
+        >
+          <CheckCircle className="mr-2 h-4 w-4" />
+          Mark as Complete
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete booking #{booking.bookingNumber}? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleDelete(booking.id, booking.bookingNumber)}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <>
-      <div className="min-h-screen bg-muted/40 p-4 sm:p-10">
-        <Card>
+      <div className="min-h-screen bg-muted/40 p-4 sm:p-6 md:p-10">
+        <Card className="w-full">
           <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div>
               <CardTitle>Client Bookings</CardTitle>
@@ -268,7 +328,7 @@ export default function AdminDashboard() {
                 disabled={filteredBookings.length === 0}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download PDF
+                <span className="hidden sm:inline">Download PDF</span>
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -278,7 +338,7 @@ export default function AdminDashboard() {
                     disabled={bookings.length === 0}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Delete All
+                    <span className="hidden sm:inline">Delete All</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -309,7 +369,44 @@ export default function AdminDashboard() {
                 className="pl-10"
               />
             </div>
-            <div className="overflow-x-auto">
+            
+            {/* Mobile View: Card List */}
+            <div className="md:hidden space-y-4">
+                {filteredBookings.length > 0 ? (
+                    filteredBookings.map(booking => (
+                        <Card key={booking.id} className={cn('w-full', booking.status === 'cancelled' && 'bg-muted/50')}>
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle className="text-lg">#{booking.bookingNumber}</CardTitle>
+                                        <CardDescription>{booking.name}</CardDescription>
+                                    </div>
+                                    <Badge variant={getStatusBadgeVariant(booking.status)}>{booking.status}</Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3 text-sm">
+                                <div className="flex items-center"><Tag className="w-4 h-4 mr-2 text-muted-foreground" /> {booking.service}</div>
+                                <div className="flex items-center"><Calendar className="w-4 h-4 mr-2 text-muted-foreground" /> {booking.date}</div>
+                                <div className="flex items-center"><Mail className="w-4 h-4 mr-2 text-muted-foreground" /> {booking.email}</div>
+                                <div className="flex items-center"><Phone className="w-4 h-4 mr-2 text-muted-foreground" /> {booking.phone}</div>
+                                {booking.notes && <div className="flex items-start pt-2"><Notebook className="w-4 h-4 mr-2 mt-1 text-muted-foreground" /> <p className="flex-1">{booking.notes}</p></div>}
+                            </CardContent>
+                            <CardFooter className="flex justify-between items-center">
+                                <p className="text-xs text-muted-foreground">
+                                  <Clock className="inline w-3 h-3 mr-1" />
+                                  {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A'}
+                                </p>
+                                <BookingActionsMenu booking={booking} />
+                            </CardFooter>
+                        </Card>
+                    ))
+                ) : (
+                    <div className="text-center h-24 flex items-center justify-center">No bookings found.</div>
+                )}
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -356,62 +453,10 @@ export default function AdminDashboard() {
                           {booking.notes || '-'}
                         </TableCell>
                         <TableCell>
-                          {new Date(booking.createdAt).toLocaleDateString()}
+                          {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                               <DropdownMenuItem onClick={() => handleSendWhatsApp(booking)}>
-                                <MessageSquare className="mr-2 h-4 w-4" />
-                                Send WhatsApp
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleMarkAsComplete(
-                                    booking.id,
-                                    booking.bookingNumber
-                                  )
-                                }
-                                disabled={booking.status === 'completed'}
-                              >
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Mark as Complete
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                          <Trash2 className="mr-2 h-4 w-4" />
-                                          Delete
-                                      </DropdownMenuItem>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                      <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                          Are you sure you want to delete booking #{booking.bookingNumber}? This action cannot be undone.
-                                      </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                          onClick={() => handleDelete(booking.id, booking.bookingNumber)}
-                                          className="bg-destructive hover:bg-destructive/90"
-                                      >
-                                          Delete
-                                      </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <BookingActionsMenu booking={booking} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -443,7 +488,7 @@ export default function AdminDashboard() {
                             <li key={b.id} className="text-sm border-b pb-2">
                                 <p><strong>Booking #{b.bookingNumber}</strong></p>
                                 <p>{b.name} - {b.service}</p>
-                                <p className="text-muted-foreground">{formatDistanceToNow(new Date(b.createdAt), { addSuffix: true })}</p>
+                                <p className="text-muted-foreground">{b.createdAt ? formatDistanceToNow(new Date(b.createdAt), { addSuffix: true }) : ''}</p>
                             </li>
                         ))}
                     </ul>
