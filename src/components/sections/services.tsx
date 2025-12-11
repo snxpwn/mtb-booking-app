@@ -32,6 +32,18 @@ const servicesList = [
     description:
       'Multiple fine lash extensions are fanned out and applied to a single natural lash, creating a full and glamorous look.',
   },
+  {
+    id: 'infill',
+    name: 'Infill',
+    description:
+      "Maintain your beautiful lashes. Infills are recommended every 2-3 weeks to keep your extensions looking full and fresh.",
+  },
+  {
+    id: 'lash-removal',
+    name: 'Lash Removal',
+    description:
+      "Safely and gently remove your eyelash extensions, ensuring your natural lashes stay healthy and undamaged.",
+  },
 ];
 
 export default function ServicesSection() {
@@ -46,8 +58,11 @@ export default function ServicesSection() {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {servicesList.map(service => {
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {servicesList.map((service, index) => {
+          const isLastItemOnLargeScreen = index === servicesList.length - 1 && servicesList.length % 3 === 1;
+          const isSecondToLastOnLargeScreen = index === servicesList.length - 2 && servicesList.length % 3 === 2;
+
           return (
             <Card key={service.id} className="flex flex-col transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg">
               <CardHeader>
