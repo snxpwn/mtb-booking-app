@@ -83,7 +83,7 @@ export default function ChatSheet({ isOpen, onOpenChange }: ChatSheetProps) {
           <DialogTitle className="flex items-center justify-center gap-2">
             <Logo className="text-2xl" /> Assistant
           </DialogTitle>
-           <DialogDescription>Your personal booking helper</DialogDescription>
+           <DialogDescription>Your friendly guide to beautiful lashes.</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="flex-1" ref={scrollAreaRef}>
