@@ -43,8 +43,9 @@ export async function processBooking(
   } catch (error: any) {
       console.error("Error saving booking to Firestore:", error.message);
       // Provide a more specific error for easier debugging.
-      if (error.message.includes('Firebase Admin SDK is not initialized') || error.message.includes('service account')) {
-          throw new Error(`Server configuration error: The app cannot connect to the database because the FIREBASE_SERVICE_ACCOUNT_KEY is missing or invalid. Please check your .env file and server logs. Details: ${error.message}`);
+      const specificError = `Server configuration error: The app cannot connect to the database. Please check your server logs for the full error details from Firebase. Original Error: ${error.message}`;
+      if (error.message.includes('service account')) {
+          throw new Error(specificError);
       }
       throw new Error(`Failed to save booking to the database. ${error.message}`);
   }
