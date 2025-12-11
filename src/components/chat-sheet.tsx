@@ -28,6 +28,7 @@ export default function ChatSheet({ isOpen, onOpenChange }: ChatSheetProps) {
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -54,6 +55,10 @@ export default function ChatSheet({ isOpen, onOpenChange }: ChatSheetProps) {
 
       const modelMessage: Message = { role: 'model', content: response.reply };
       setMessages(prev => [...prev, modelMessage]);
+
+      // Play sound on new message from bot
+      audioRef.current?.play().catch(error => console.log("Audio play failed:", error));
+
 
     } catch (error) {
       console.error('Error asking assistant:', error);
@@ -162,6 +167,9 @@ export default function ChatSheet({ isOpen, onOpenChange }: ChatSheetProps) {
             </Button>
           </div>
         </div>
+        <audio ref={audioRef} src="data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBvbiBzb25nIEVRIHN0dWRpbwBUQ09QAAAAdgAAA1NvbmcgY3JlYXRlZCBieSB0aGUgbXVzaWMgY29tcG9zZXIgTlJFLCB0aGUgbXVzaWMgY29tcG9zZXIgV0FQUEVSIFBOUyAmIEtFRU4gVENIUE4gZG93bmxvYWQgbGllbnMgYSBvbnRoZSB3ZWJzaXRlIHd3dy5sYXNvb25vdGhlcXVlLm9yZwBUSVQyAAAABgAAAzIyMzU0AFRFRgAAA08AAAAzMXM0YS0yNDI0Yi1zMTM0cy0yNmYyZi0wMGI2YS00NzUyYS00MjAyYS00OTM4YS0xMTE5cy1hYWEwYS0xMmFmMC0xMzM2Zi0xNDIzcy0xNTMxZS0xNjUzYS0xNzM5YS0xODMyczEtMzA0czgtMTEzMi05NDE5bWIAAAAADgAAAzIxNzc4MQBURVNTAAAAGgAAAzIyMzc4MwBURVNUAAAAFAAAAzIyMzg0MwAAAAAATGF2YzU2LjI1LjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQAAAAAABASBAUAgAAAAA//uQJAAAABAAAAAAAAA//"
+          preload="auto"
+        ></audio>
       </DialogContent>
     </Dialog>
   );
