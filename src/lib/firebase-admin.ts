@@ -8,12 +8,12 @@ function initializeAdminApp() {
   console.log("[Firebase Admin Debug] initializeAdminApp called.");
 
   // Prevent re-initialization
-  if (isFirebaseAdminInitialized) {
-    console.log("[Firebase Admin Debug] Admin SDK already initialized. Skipping.");
-    // Ensure adminDb is still available
+  if (admin.apps.length > 0) {
+    console.log("[Firebase Admin Debug] Admin SDK already initialized. Reusing existing app.");
     if (!adminDb) {
-      adminDb = admin.firestore();
+        adminDb = admin.firestore();
     }
+    isFirebaseAdminInitialized = true;
     return;
   }
 
@@ -44,18 +44,12 @@ function initializeAdminApp() {
        return;
     }
 
-    // Initialize the app if it hasn't been already
-    if (admin.apps.length === 0) {
-        console.log("[Firebase Admin Debug] No existing Firebase apps. Initializing a new one.");
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-        });
-        isFirebaseAdminInitialized = true;
-        console.log("Firebase Admin SDK initialized successfully.");
-    } else {
-        console.log("[Firebase Admin Debug] An app already exists. Reusing existing app.");
-        isFirebaseAdminInitialized = true; // Mark as initialized
-    }
+    console.log("[Firebase Admin Debug] No existing Firebase apps. Initializing a new one.");
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    isFirebaseAdminInitialized = true;
+    console.log("Firebase Admin SDK initialized successfully.");
     
     adminDb = admin.firestore();
 
@@ -66,13 +60,13 @@ function initializeAdminApp() {
   }
 }
 
-// Ensure initialization is attempted at least once.
+// Ensure initialization is attempted at least once when the module is loaded.
 initializeAdminApp();
 
 // Safe accessor that attempts initialization if not already done.
 export const getAdminDb = (): admin.firestore.Firestore => {
     if (!isFirebaseAdminInitialized || !adminDb) {
-        console.warn("[Firebase Admin Debug] DB not initialized. Attempting re-initialization inside getAdminDb.");
+        console.warn("[Firebase Admin Debug] DB not initialized or not available. Attempting re-initialization inside getAdminDb.");
         initializeAdminApp();
     }
 
