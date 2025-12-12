@@ -41,7 +41,7 @@ export async function processBooking(
           status: 'confirmed'
       });
   } catch (error: any) {
-      console.error("Error saving booking to Firestore:", error.message);
+      console.error("Error saving booking to Firestore:", error);
       // Re-throw the original error to get a more detailed message in the client console
       throw new Error(`Failed to save booking to the database. Original error: ${error.message}`);
   }
