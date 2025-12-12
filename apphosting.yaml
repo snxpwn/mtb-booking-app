@@ -1,4 +1,7 @@
 # Settings for App Hosting
+build:
+  prebuild:
+    - command: (cd functions && npm install)
 runConfig:
   environmentVariables:
     - variable: BUSINESS_NAME
@@ -6,7 +9,7 @@ runConfig:
     - variable: BUSINESS_ADDRESS
       value: "Watford, UK"
     - variable: BUSINESS_CONTACT
-      value: "07123456789"
+      value: "0712345_DELETED_"
     - variable: INSTAGRAM_HANDLE
       value: "@mtb"
     - variable: TIKTOK_HANDLE
