@@ -1,4 +1,3 @@
-
 "use server";
 /**
  * @fileOverview A flow for processing booking and cancellation requests.
@@ -31,7 +30,7 @@ export async function processBooking(
 ): Promise<BookingResponse> {
   const bookingNumber = await generateBookingNumber();
   
-  // Save to Firestore
+  // 1. Save to Firestore
   try {
       console.log(`[Booking Flow] Attempting to save booking #${bookingNumber} to Firestore.`);
       const db = getAdminDb();
@@ -44,11 +43,29 @@ export async function processBooking(
       console.log(`[Booking Flow] Successfully saved booking #${bookingNumber}.`);
   } catch (error: any) {
       console.error("[Booking Flow] Error saving booking to Firestore:", error);
-      // Re-throw the original error to get a more detailed message in the client console
       throw new Error(`Failed to save booking to the database. Original error: ${error.message}`);
   }
 
-  return await processBookingFlow({ ...input, bookingNumber });
+  // 2. Generate email content
+  const { output } = await bookingPrompt({ ...input, bookingNumber });
+  if (!output) {
+    throw new Error('Failed to generate booking confirmation content.');
+  }
+
+  // 3. Send emails
+  await sendBookingEmailTool({
+    ...input,
+    bookingNumber,
+    emailSubject: output.emailSubject,
+    emailBody: output.emailBody,
+  });
+
+  // 4. Return response
+  return {
+      bookingNumber: bookingNumber,
+      emailSubject: output.emailSubject,
+      emailBody: output.emailBody,
+  };
 }
 
 export async function getBookingDetails(bookingNumber: string) {
@@ -62,7 +79,6 @@ export async function getBookingDetails(bookingNumber: string) {
         }
     } catch (error: any) {
         console.error(`[Booking Flow] Error fetching booking details for #${bookingNumber}:`, error);
-        // Throw a clear error for the tool to handle
         throw new Error(`Failed to fetch booking details. Original error: ${error.message}`);
     }
 }
@@ -82,7 +98,7 @@ const bookingPrompt = ai.definePrompt({
   },
   prompt: `
     You are an email generation assistant. A customer has submitted a booking request.
-    Your task is to populate the provided HTML email template with the customer\'s details.
+    Your task is to populate the provided HTML email template with the customer's details.
 
     **DO NOT** change the HTML structure. Only replace the placeholders.
     - Replace [Booking Number] with {{{bookingNumber}}}.
@@ -162,7 +178,7 @@ const cancellationPrompt = ai.definePrompt({
     },
     prompt: `
     You are an email generation assistant. A customer has cancelled their booking.
-    Your task is to populate the provided HTML email template with the customer\'s details.
+    Your task is to populate the provided HTML email template with the customer's details.
 
     **DO NOT** change the HTML structure. Only replace the placeholders.
     - Replace {{client_name}} with {{{name}}}.
@@ -294,33 +310,6 @@ const sendBookingEmailTool = ai.defineTool(
     });
   }
 );
-
-const processBookingFlow = ai.defineFlow(
-  {
-    name: 'processBookingFlow',
-    inputSchema: BookingRequestSchema.extend({ bookingNumber: z.string() }),
-    outputSchema: BookingResponseSchema,
-  },
-  async input => {
-    const { output } = await bookingPrompt(input);
-    if (!output) {
-      throw new Error('Failed to generate booking confirmation content.');
-    }
-
-    await sendBookingEmailTool({
-      ...input,
-      emailSubject: output.emailSubject,
-      emailBody: output.emailBody,
-    });
-
-    return {
-        bookingNumber: input.bookingNumber,
-        emailSubject: output.emailSubject,
-        emailBody: output.emailBody,
-    };
-  }
-);
-
 
 const processCancellationFlow = ai.defineFlow(
   {
