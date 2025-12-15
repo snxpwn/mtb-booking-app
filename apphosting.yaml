@@ -1,4 +1,16 @@
-run:
-  cpu: 1
-  memoryMiB: 512
-  maxInstances: 10
+# This file configures the build and run settings for your App Hosting backend.
+# Reference documentation: https://firebase.google.com/docs/hosting/app-hosting/reference/apphosting-yaml
+
+# Defines the environment variables and secrets available to your application at runtime.
+env:
+  # Define GMAIL_EMAIL as a secret. The value will be sourced from Secret Manager.
+  - variable: GMAIL_EMAIL
+    secret: GMAIL_EMAIL
+
+  # Define GMAIL_APP_PASSWORD as a secret for the Gmail App Password.
+  - variable: GMAIL_APP_PASSWORD
+    secret: GMAIL_APP_PASSWORD
+
+  # Define BUSINESS_NAME as a standard environment variable.
+  - variable: BUSINESS_NAME
+    value: "MTB Lashes"
