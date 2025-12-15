@@ -101,14 +101,15 @@ export default function AdminDashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedBookings = (await getBookings()) as Booking[];
+      // FIX: Ensure fetchedBookings is an array, defaulting to [] if getBookings returns a falsy value.
+      const fetchedBookings = (await getBookings()) as Booking[] || [];
       setBookings(fetchedBookings);
 
       const lastLogin = localStorage.getItem('lastAdminLogin');
       if (lastLogin) {
+        // This filter is now safe because fetchedBookings is guaranteed to be an array.
         const newSinceLastLogin = fetchedBookings.filter(b => {
             try {
-                // Ensure createdAt is a valid date string before creating a Date object
                 return b.createdAt && new Date(b.createdAt) > new Date(lastLogin);
             } catch {
                 return false; // Ignore invalid dates
@@ -130,6 +131,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // FIX: Defensively ensure `bookings` is an array before filtering to prevent runtime errors.
+  const filteredBookings = (bookings || []).filter(booking =>
+    (booking.bookingNumber || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleDownloadPdf = () => {
     const doc = new jsPDF();
@@ -204,10 +210,6 @@ export default function AdminDashboard() {
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
-
-  const filteredBookings = bookings.filter(booking =>
-    (booking.bookingNumber || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (isLoading) {
     return (
