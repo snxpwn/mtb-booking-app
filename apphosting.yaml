@@ -1,7 +1,4 @@
 # Settings for App Hosting
-build:
-  prebuild:
-    - command: (cd functions && npm install)
 runConfig:
   environmentVariables:
     - variable: BUSINESS_NAME
