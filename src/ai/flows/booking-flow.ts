@@ -89,11 +89,11 @@ const bookingPrompt = ai.definePrompt({
     - Replace [Customer Name] with {{{name}}}.
     - Replace [Service Name – e.g., Eyelash Extensions / Infills] with {{{service}}}.
     - Replace [Date] with {{{date}}}.
-    - Replace [Studio Address] with "${process.env.BUSINESS_ADDRESS || 'Watford, UK'}".
-    - Replace [Phone / WhatsApp] with "${process.env.BUSINESS_CONTACT || 'your contact number here'}".
-    - Replace [Business Name] with "${process.env.BUSINESS_NAME || 'MTB'}".
-    - Replace [Instagram Handle] with "${process.env.INSTAGRAM_HANDLE || '@mtb'}".
-    - Replace [TikTok Handle] with "${process.env.TIKTOK_HANDLE || '@mtb'}".
+    - Replace [Studio Address] with "${process.env.BUSINESS_ADDRESS}".
+    - Replace [Phone / WhatsApp] with "${process.env.BUSINESS_CONTACT}".
+    - Replace [Business Name] with "${process.env.BUSINESS_NAME}".
+    - Replace [Instagram Handle] with "${process.env.INSTAGRAM_HANDLE}".
+    - Replace [TikTok Handle] with "${process.env.TIKTOK_HANDLE}".
 
     The final output should only be a JSON object with 'emailSubject' and 'emailBody' properties. The 'emailSubject' should be "Your Appointment is Confirmed ✨".
 
@@ -232,7 +232,7 @@ const cancellationPrompt = ai.definePrompt({
                 <tr>
                   <td style="color:#FFFFFF; font-size:13px; text-align:center; opacity:0.8;">
                     Thank you for your understanding.<br>
-                    <strong>MTB – More Than Beauty</strong><br>
+                    <strong>${process.env.BUSINESS_NAME}</strong><br>
                   </td>
                 </tr>
     
