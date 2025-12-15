@@ -26,7 +26,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import Section from '@/components/section';
-import { createBooking } from '@/app/actions';
 import { bookingSchema } from '@/lib/schemas';
 import PolicyDialog from '@/components/policy-dialog';
 import BookingLoader from '@/components/booking-loader';
@@ -71,23 +70,34 @@ export default function BookingSection() {
 
     setIsSubmitting(true);
     try {
-      const result = await createBooking(formData);
-      console.log('AI-generated email content:', result);
+      const response = await fetch('/api/booking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create booking.');
+      }
+
+      const result = await response.json();
+      console.log('API response:', result);
 
       toast({
         title: 'Booking Request Sent!',
-        description:
-          "Thank you for your booking. We'll be in touch shortly to confirm.",
+        description: "Thank you for your booking. We'll be in touch shortly to confirm.",
       });
       form.reset();
       setFormData(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing booking:', error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description:
-          'There was a problem submitting your booking. Please try again.',
+        description: error.message || 'There was a problem submitting your booking. Please try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -100,8 +110,7 @@ export default function BookingSection() {
     toast({
       variant: 'destructive',
       title: "We're sorry to see you go!",
-      description:
-        "We can't continue with the booking until you agree to the policy.",
+      description: "We can't continue with the booking until you agree to the policy.",
     });
   }
 
