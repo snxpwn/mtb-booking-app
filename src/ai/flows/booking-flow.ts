@@ -1,4 +1,4 @@
-"use server";
+'use server';
 /**
  * @fileOverview A flow for processing booking and cancellation requests.
  *
@@ -18,7 +18,6 @@ import { sendEmail } from '@/lib/email';
 import { getAdminDb } from '@/lib/firebase-admin';
 
 async function generateBookingNumber(): Promise<string> {
-  // Generate a random 5-digit number
   const min = 10000;
   const max = 99999;
   const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -28,43 +27,62 @@ async function generateBookingNumber(): Promise<string> {
 export async function processBooking(
   input: BookingRequest
 ): Promise<BookingResponse> {
+  console.log('[Booking Flow] Starting booking process for:', input.email);
   const bookingNumber = await generateBookingNumber();
-  
+  console.log(`[Booking Flow] Generated booking number: ${bookingNumber}`);
+
   // 1. Save to Firestore
   try {
-      console.log(`[Booking Flow] Attempting to save booking #${bookingNumber} to Firestore.`);
-      const db = getAdminDb();
-      await db.collection('bookings').doc(bookingNumber).set({
-          ...input,
-          bookingNumber,
-          createdAt: new Date().toISOString(),
-          status: 'confirmed'
-      });
-      console.log(`[Booking Flow] Successfully saved booking #${bookingNumber}.`);
+    console.log(`[Booking Flow] Step 1: Saving booking to Firestore...`);
+    const db = getAdminDb();
+    await db.collection('bookings').doc(bookingNumber).set({
+      ...input,
+      bookingNumber,
+      createdAt: new Date().toISOString(),
+      status: 'confirmed',
+    });
+    console.log(`[Booking Flow] Step 1: Successfully saved booking.`);
   } catch (error: any) {
-      console.error("[Booking Flow] Error saving booking to Firestore:", error);
-      throw new Error(`Failed to save booking to the database. Original error: ${error.message}`);
+    console.error('[Booking Flow] CRITICAL: Step 1 FAILED - Error saving to Firestore:', error.message, error.stack);
+    throw new Error(`Failed during Firestore operation: ${error.message}`);
   }
 
   // 2. Generate email content
-  const { output } = await bookingPrompt({ ...input, bookingNumber });
-  if (!output) {
-    throw new Error('Failed to generate booking confirmation content.');
+  let promptOutput;
+  try {
+    console.log(`[Booking Flow] Step 2: Generating email content with AI...`);
+    const { output } = await bookingPrompt({ ...input, bookingNumber });
+    if (!output) {
+      throw new Error('AI prompt returned empty output.');
+    }
+    promptOutput = output;
+    console.log(`[Booking Flow] Step 2: Successfully generated email content.`);
+  } catch (error: any) {
+    console.error('[Booking Flow] CRITICAL: Step 2 FAILED - Error generating AI content:', error.message, error.stack);
+    throw new Error(`Failed during AI content generation: ${error.message}`);
   }
 
   // 3. Send emails
-  await sendBookingEmailTool({
-    ...input,
-    bookingNumber,
-    emailSubject: output.emailSubject,
-    emailBody: output.emailBody,
-  });
+  try {
+    console.log(`[Booking Flow] Step 3: Sending booking emails...`);
+    await sendBookingEmailTool({
+      ...input,
+      bookingNumber,
+      emailSubject: promptOutput.emailSubject,
+      emailBody: promptOutput.emailBody,
+    });
+    console.log(`[Booking Flow] Step 3: Successfully sent emails.`);
+  } catch (error: any) {
+    console.error('[Booking Flow] CRITICAL: Step 3 FAILED - Error sending emails:', error.message, error.stack);
+    throw new Error(`Failed during email sending: ${error.message}`);
+  }
 
   // 4. Return response
+  console.log('[Booking Flow] Booking process completed successfully.');
   return {
-      bookingNumber: bookingNumber,
-      emailSubject: output.emailSubject,
-      emailBody: output.emailBody,
+    bookingNumber: bookingNumber,
+    emailSubject: promptOutput.emailSubject,
+    emailBody: promptOutput.emailBody,
   };
 }
 
@@ -98,7 +116,7 @@ const bookingPrompt = ai.definePrompt({
   },
   prompt: `
     You are an email generation assistant. A customer has submitted a booking request.
-    Your task is to populate the provided HTML email template with the customer's details.
+    Your task is to populate the provided HTML email template with the customer\'s details.
 
     **DO NOT** change the HTML structure. Only replace the placeholders.
     - Replace [Booking Number] with {{{bookingNumber}}}.
@@ -178,7 +196,7 @@ const cancellationPrompt = ai.definePrompt({
     },
     prompt: `
     You are an email generation assistant. A customer has cancelled their booking.
-    Your task is to populate the provided HTML email template with the customer's details.
+    Your task is to populate the provided HTML email template with the customer\'s details.
 
     **DO NOT** change the HTML structure. Only replace the placeholders.
     - Replace {{client_name}} with {{{name}}}.
