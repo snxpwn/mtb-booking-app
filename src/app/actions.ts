@@ -28,6 +28,7 @@ export async function verifyPin(pin: string): Promise<{ success: boolean }> {
 export async function createBooking(
   input: ClientBookingRequest
 ): Promise<BookingResponse> {
+    console.log('[Server Action] createBooking called with:', input);
     const serverInput = {
         ...input,
         date: input.date,
