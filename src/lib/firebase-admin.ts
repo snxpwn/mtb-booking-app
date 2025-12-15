@@ -1,78 +1,84 @@
 
+'use server';
+
 import admin from 'firebase-admin';
 
-let adminDb: admin.firestore.Firestore;
-let isFirebaseAdminInitialized = false;
+// This is a global cache for the initialized Firebase Admin app and Firestore instance.
+// Using a global variable ensures that we only initialize the SDK once, which is crucial
+// in a serverless environment where modules can be re-evaluated.
+let globalWithFirebase = global as typeof globalThis & {
+  _firebaseAdminApp: admin.app.App | undefined;
+  _firestore: admin.firestore.Firestore | undefined;
+};
 
-function initializeAdminApp() {
-  console.log("[Firebase Admin Debug] initializeAdminApp called.");
+function initializeFirebaseAdmin() {
+  console.log('[Firebase Admin] Attempting to initialize...');
 
-  // Prevent re-initialization
-  if (admin.apps.length > 0) {
-    console.log("[Firebase Admin Debug] Admin SDK already initialized. Reusing existing app.");
-    if (!adminDb) {
-        adminDb = admin.firestore();
-    }
-    isFirebaseAdminInitialized = true;
-    return;
+  // If the app is already initialized, reuse the existing instance.
+  if (globalWithFirebase._firebaseAdminApp) {
+    console.log('[Firebase Admin] Reusing existing initialized instance.');
+    return {
+      app: globalWithFirebase._firebaseAdminApp,
+      db: globalWithFirebase._firestore!,
+    };
   }
 
   const serviceAccountKeyString = process.env.SERVICE_ACCOUNT_KEY_JSON;
 
   if (!serviceAccountKeyString) {
-    console.error('CRITICAL ERROR: SERVICE_ACCOUNT_KEY_JSON environment variable is not set.');
-    // Do not proceed with initialization
-    return;
+    console.error('[Firebase Admin] CRITICAL: SERVICE_ACCOUNT_KEY_JSON is not set. Database operations will fail.');
+    throw new Error('Server is missing critical configuration for database access.');
   }
 
   try {
     let serviceAccount;
-    // Attempt to parse the service account key
     try {
-        serviceAccount = JSON.parse(serviceAccountKeyString);
+      serviceAccount = JSON.parse(serviceAccountKeyString);
+      // The key often comes as a stringified JSON within a string.
+      if (typeof serviceAccount === 'string') {
+        serviceAccount = JSON.parse(serviceAccount);
+      }
     } catch (e: any) {
-        console.error('CRITICAL ERROR: Failed to parse SERVICE_ACCOUNT_KEY_JSON. It is likely malformed. Error:', e.message);
-        // Stop execution if parsing fails
-        return;
+      console.error('[Firebase Admin] CRITICAL: Failed to parse SERVICE_ACCOUNT_KEY_JSON. It is likely malformed.', e.message);
+      throw new Error('Server configuration for database access is malformed.');
     }
-    
-    // Replace literal \\n with actual newlines in the private key
+
+    // The private key needs actual newlines, not the literal '\n' string.
     if (serviceAccount.private_key) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     } else {
-       console.error('CRITICAL ERROR: The parsed service account key is missing the "private_key" field.');
-       return;
+      console.error('[Firebase Admin] CRITICAL: Parsed service account key is missing the "private_key" field.');
+      throw new Error('Server configuration for database access is invalid.');
     }
-
-    console.log("[Firebase Admin Debug] No existing Firebase apps. Initializing a new one.");
-    admin.initializeApp({
+    
+    console.log('[Firebase Admin] Initializing a new Firebase Admin app instance.');
+    const app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    isFirebaseAdminInitialized = true;
-    console.log("Firebase Admin SDK initialized successfully.");
+
+    const db = admin.firestore();
+
+    // Cache the initialized instances in the global object.
+    globalWithFirebase._firebaseAdminApp = app;
+    globalWithFirebase._firestore = db;
     
-    adminDb = admin.firestore();
+    console.log('[Firebase Admin] Initialization successful.');
+    return { app, db };
 
   } catch (error: any) {
-    console.error(`Firebase Admin initialization error: ${error.message}`);
-    // Clear the flag on failure to allow retry if applicable, though it's unlikely to succeed without a config change
-    isFirebaseAdminInitialized = false;
+    console.error('[Firebase Admin] CRITICAL: Firebase Admin SDK initialization failed.', error.message);
+    // Do not cache on failure.
+    globalWithFirebase._firebaseAdminApp = undefined;
+    globalWithFirebase._firestore = undefined;
+    throw new Error(`Server-side Firebase initialization failed: ${error.message}`);
   }
 }
 
-// Ensure initialization is attempted at least once when the module is loaded.
-initializeAdminApp();
-
-// Safe accessor that attempts initialization if not already done.
+/**
+ * Gets the initialized Firestore database instance.
+ * This function ensures that the Firebase Admin SDK is initialized on-demand and only once.
+ */
 export const getAdminDb = (): admin.firestore.Firestore => {
-    if (!isFirebaseAdminInitialized || !adminDb) {
-        console.warn("[Firebase Admin Debug] DB not initialized or not available. Attempting re-initialization inside getAdminDb.");
-        initializeAdminApp();
-    }
-
-    if (!adminDb) {
-        // This is a critical failure state.
-        throw new Error('Database connection failed. The server is missing the SERVICE_ACCOUNT_KEY_JSON configuration or Firebase Admin SDK failed to initialize.');
-    }
-    return adminDb;
+  const { db } = initializeFirebaseAdmin();
+  return db;
 };

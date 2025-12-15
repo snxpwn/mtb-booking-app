@@ -102,10 +102,6 @@ export default function AdminDashboard() {
     setError(null);
     try {
       const fetchedBookings = (await getBookings()) as Booking[];
-      if (!Array.isArray(fetchedBookings)) {
-        // This handles cases where the server action might fail and not return an array
-        throw new Error('Received invalid data for bookings.');
-      }
       setBookings(fetchedBookings);
 
       const lastLogin = localStorage.getItem('lastAdminLogin');
@@ -118,14 +114,12 @@ export default function AdminDashboard() {
                 return false; // Ignore invalid dates
             }
         });
-        setNewBookings(newSinceLastLogin);
         if (newSinceLastLogin.length > 0) {
+            setNewBookings(newSinceLastLogin);
             setShowNewBookingsModal(true);
         }
       }
-
       localStorage.setItem('lastAdminLogin', new Date().toISOString());
-
     } catch (err: any) {
       setError(err.message || 'Failed to fetch bookings. Please ensure the server is configured correctly and try again.');
     } finally {

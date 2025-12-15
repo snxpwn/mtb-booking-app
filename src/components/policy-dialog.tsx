@@ -52,7 +52,7 @@ export default function PolicyDialog({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 text-sm text-muted-foreground">
-                    <p className="font-semibold">Last updated: 2025</p>
+                    <p className="font-semibold">Last updated: 2024</p>
                     <h3 className="font-semibold text-foreground mt-2">Introduction</h3>
                     <p>
                       More Than Beauty (“MTB”, “we”, “our”) values your privacy. This
@@ -100,7 +100,7 @@ export default function PolicyDialog({
                 </AccordionTrigger>
                 <AccordionContent>
                    <div className="space-y-4 text-sm text-muted-foreground">
-                    <p className="font-semibold">Last updated: 2025</p>
+                    <p className="font-semibold">Last updated: 2024</p>
                     <p>
                       These Terms & Conditions apply to all bookings. By booking, you agree to these terms.
                       Bookings must be made via our website or direct contact. Please arrive on time.

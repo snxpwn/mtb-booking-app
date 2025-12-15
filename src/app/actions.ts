@@ -69,10 +69,10 @@ export async function getBookings() {
             return [];
         }
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching bookings:", error);
-        // Return empty array instead of crashing, but log the error
-        return [];
+        // Throw the error so the client can handle it
+        throw new Error(`Failed to fetch bookings. Original error: ${error.message}`);
     }
 }
 

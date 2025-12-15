@@ -33,6 +33,7 @@ export async function processBooking(
   
   // Save to Firestore
   try {
+      console.log(`[Booking Flow] Attempting to save booking #${bookingNumber} to Firestore.`);
       const db = getAdminDb();
       await db.collection('bookings').doc(bookingNumber).set({
           ...input,
@@ -40,8 +41,9 @@ export async function processBooking(
           createdAt: new Date().toISOString(),
           status: 'confirmed'
       });
+      console.log(`[Booking Flow] Successfully saved booking #${bookingNumber}.`);
   } catch (error: any) {
-      console.error("Error saving booking to Firestore:", error);
+      console.error("[Booking Flow] Error saving booking to Firestore:", error);
       // Re-throw the original error to get a more detailed message in the client console
       throw new Error(`Failed to save booking to the database. Original error: ${error.message}`);
   }
@@ -58,9 +60,10 @@ export async function getBookingDetails(bookingNumber: string) {
         } else {
             return null;
         }
-    } catch (error) {
-        console.error("Error fetching booking details:", error);
-        return null;
+    } catch (error: any) {
+        console.error(`[Booking Flow] Error fetching booking details for #${bookingNumber}:`, error);
+        // Throw a clear error for the tool to handle
+        throw new Error(`Failed to fetch booking details. Original error: ${error.message}`);
     }
 }
 
@@ -164,7 +167,7 @@ const cancellationPrompt = ai.definePrompt({
     **DO NOT** change the HTML structure. Only replace the placeholders.
     - Replace {{client_name}} with {{{name}}}.
     - Replace {{appointment_date}} with {{{date}}}.
-    - The booking link in the button is static: https://mtbxov1.web.app/#booking.
+    - The booking link in the button is static: https://mtbxov1--mtbxov1.us-central1.hosted.app/#booking.
     
     The final output should only be a JSON object with 'emailSubject' and 'emailBody' properties. The 'emailSubject' should be "Appointment Cancelled".
 
@@ -218,7 +221,7 @@ const cancellationPrompt = ai.definePrompt({
                 <!-- Button -->
                 <tr>
                   <td align="center" style="padding-bottom:25px;">
-                    <a href="https://mtbxov1.web.app/#booking" 
+                    <a href="https://mtbxov1--mtbxov1.us-central1.hosted.app/#booking" 
                        style="background-color:#D4AF37; color:#39040C; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:bold; display:inline-block;">
                       Book a New Appointment
                     </a>
@@ -299,9 +302,6 @@ const processBookingFlow = ai.defineFlow(
     outputSchema: BookingResponseSchema,
   },
   async input => {
-    // Save to database
-    // await connector.mutations.CreateBooking(input);
-
     const { output } = await bookingPrompt(input);
     if (!output) {
       throw new Error('Failed to generate booking confirmation content.');
