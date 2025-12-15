@@ -1,26 +1,4 @@
-# Settings for App Hosting
-runConfig:
-  environmentVariables:
-    - variable: BUSINESS_NAME
-      value: "MTB - More Than Beauty"
-    - variable: BUSINESS_ADDRESS
-      value: "Watford, UK"
-    - variable: BUSINESS_CONTACT
-      value: "0712345_DELETED_"
-    - variable: INSTAGRAM_HANDLE
-      value: "@mtb"
-    - variable: TIKTOK_HANDLE
-      value: "@mtb"
-    - variable: ADMIN_PIN
-      value: "1825"
-  secrets:
-    - variable: SERVICE_ACCOUNT_KEY_JSON
-      secret: SERVICE_ACCOUNT_KEY_JSON
-    - variable: GEMINI_API_KEY
-      secret: GEMINI_API_KEY
-    - variable: GMAIL_EMAIL
-      secret: GMAIL_EMAIL
-    - variable: GMAIL_APP_PASSWORD
-      secret: GMAIL_APP_PASSWORD
-    - variable: ADMIN_EMAIL
-      secret: ADMIN_EMAIL
+run:
+  cpu: 1
+  memoryMiB: 512
+  maxInstances: 10
