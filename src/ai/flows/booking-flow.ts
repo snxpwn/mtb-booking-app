@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for processing booking and cancellation requests.
@@ -47,42 +48,42 @@ export async function processBooking(
     throw new Error(`Failed during Firestore operation: ${error.message}`);
   }
 
-  // 2. Generate email content
-  let promptOutput;
-  try {
-    console.log(`[Booking Flow] Step 2: Generating email content with AI...`);
-    const { output } = await bookingPrompt({ ...input, bookingNumber });
-    if (!output) {
-      throw new Error('AI prompt returned empty output.');
-    }
-    promptOutput = output;
-    console.log(`[Booking Flow] Step 2: Successfully generated email content.`);
-  } catch (error: any) {
-    console.error('[Booking Flow] CRITICAL: Step 2 FAILED - Error generating AI content:', error.message, error.stack);
-    throw new Error(`Failed during AI content generation: ${error.message}`);
-  }
+  // 2. Generate email content - DISABLED
+  // let promptOutput;
+  // try {
+  //   console.log(`[Booking Flow] Step 2: Generating email content with AI...`);
+  //   const { output } = await bookingPrompt({ ...input, bookingNumber });
+  //   if (!output) {
+  //     throw new Error('AI prompt returned empty output.');
+  //   }
+  //   promptOutput = output;
+  //   console.log(`[Booking Flow] Step 2: Successfully generated email content.`);
+  // } catch (error: any) {
+  //   console.error('[Booking Flow] CRITICAL: Step 2 FAILED - Error generating AI content:', error.message, error.stack);
+  //   throw new Error(`Failed during AI content generation: ${error.message}`);
+  // }
 
-  // 3. Send emails
-  try {
-    console.log(`[Booking Flow] Step 3: Sending booking emails...`);
-    await sendBookingEmailTool({
-      ...input,
-      bookingNumber,
-      emailSubject: promptOutput.emailSubject,
-      emailBody: promptOutput.emailBody,
-    });
-    console.log(`[Booking Flow] Step 3: Successfully sent emails.`);
-  } catch (error: any) {
-    console.error('[Booking Flow] CRITICAL: Step 3 FAILED - Error sending emails:', error.message, error.stack);
-    throw new Error(`Failed during email sending: ${error.message}`);
-  }
+  // 3. Send emails - DISABLED
+  // try {
+  //   console.log(`[Booking Flow] Step 3: Sending booking emails...`);
+  //   await sendBookingEmailTool({
+  //     ...input,
+  //     bookingNumber,
+  //     emailSubject: promptOutput.emailSubject,
+  //     emailBody: promptOutput.emailBody,
+  //   });
+  //   console.log(`[Booking Flow] Step 3: Successfully sent emails.`);
+  // } catch (error: any) {
+  //   console.error('[Booking Flow] CRITICAL: Step 3 FAILED - Error sending emails:', error.message, error.stack);
+  //   throw new Error(`Failed during email sending: ${error.message}`);
+  // }
 
   // 4. Return response
-  console.log('[Booking Flow] Booking process completed successfully.');
+  console.log('[Booking Flow] Booking process completed successfully (Email sending disabled).');
   return {
     bookingNumber: bookingNumber,
-    emailSubject: promptOutput.emailSubject,
-    emailBody: promptOutput.emailBody,
+    emailSubject: 'Your Appointment is Confirmed ✨',
+    emailBody: 'Your booking has been received. You will get a manual confirmation shortly.',
   };
 }
 
@@ -116,7 +117,7 @@ const bookingPrompt = ai.definePrompt({
   },
   prompt: `
     You are an email generation assistant. A customer has submitted a booking request.
-    Your task is to populate the provided HTML email template with the customer\'s details.
+    Your task is to populate the provided HTML email template with the customer\\'s details.
 
     **DO NOT** change the HTML structure. Only replace the placeholders.
     - Replace [Booking Number] with {{{bookingNumber}}}.
@@ -196,7 +197,7 @@ const cancellationPrompt = ai.definePrompt({
     },
     prompt: `
     You are an email generation assistant. A customer has cancelled their booking.
-    Your task is to populate the provided HTML email template with the customer\'s details.
+    Your task is to populate the provided HTML email template with the customer\\'s details.
 
     **DO NOT** change the HTML structure. Only replace the placeholders.
     - Replace {{client_name}} with {{{name}}}.
@@ -355,44 +356,43 @@ const processCancellationFlow = ai.defineFlow(
         status: 'cancelled'
     });
 
-    // 3. Generate cancellation email
-    const { output } = await cancellationPrompt({
-        name: booking.name,
-        service: booking.service,
-        date: booking.date, 
-        bookingNumber: booking.bookingNumber
-    });
+    // 3. Generate cancellation email - DISABLED
+    // const { output } = await cancellationPrompt({
+    //     name: booking.name,
+    //     service: booking.service,
+    //     date: booking.date, 
+    //     bookingNumber: booking.bookingNumber
+    // });
 
-    if (!output) {
-      throw new Error('Failed to generate cancellation email content.');
-    }
+    // if (!output) {
+    //   throw new Error('Failed to generate cancellation email content.');
+    // }
 
-    // 4. Send cancellation email to customer
-    await sendEmail({
-        to: booking.email,
-        subject: output.emailSubject,
-        html: output.emailBody,
-        from: process.env.GMAIL_EMAIL
-    });
+    // // 4. Send cancellation email to customer - DISABLED
+    // await sendEmail({
+    //     to: booking.email,
+    //     subject: output.emailSubject,
+    //     html: output.emailBody,
+    //     from: process.env.GMAIL_EMAIL
+    // });
 
-     // 5. Send internal notification to admin
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail) {
-        await sendEmail({
-            to: adminEmail,
-            subject: `Booking Cancellation: #${bookingNumber}`,
-            html: `
-                <h2>Booking Cancellation Notification</h2>
-                <p>The following booking has been cancelled by the customer:</p>
-                <p><strong>Booking Number:</strong> ${booking.bookingNumber}</p>
-                <p><strong>Name:</strong> ${booking.name}</p>
-                <p><strong>Email:</strong> ${booking.email}</p>
-                <p><strong>Service:</strong> ${booking.service}</p>
-                <p><strong>Original Date:</strong> ${booking.date}</p>
-            `,
-            from: process.env.GMAIL_EMAIL
-        });
-    }
-
+    //  // 5. Send internal notification to admin - DISABLED
+    // const adminEmail = process.env.ADMIN_EMAIL;
+    // if (adminEmail) {
+    //     await sendEmail({
+    //         to: adminEmail,
+    //         subject: `Booking Cancellation: #${bookingNumber}`,
+    //         html: \`
+    //             <h2>Booking Cancellation Notification</h2>
+    //             <p>The following booking has been cancelled by the customer:</p>
+    //             <p><strong>Booking Number:</strong> ${booking.bookingNumber}</p>
+    //             <p><strong>Name:</strong> ${booking.name}</p>
+    //             <p><strong>Email:</strong> ${booking.email}</p>
+    //             <p><strong>Service:</strong> ${booking.service}</p>
+    //             <p><strong>Original Date:</strong> ${booking.date}</p>
+    //         \`,
+    //         from: process.env.GMAIL_EMAIL
+    //     });
+    // }
   }
 );
