@@ -10,7 +10,6 @@ import ChatBubble from "@/components/chat-bubble";
 import PolicySection from "@/components/sections/policy";
 
 export default function Home() {
-  console.log("Home page is rendering");
   return (
     <>
       <Header />
