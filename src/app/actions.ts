@@ -1,12 +1,12 @@
 
 'use server';
 
-import { processBooking, processCancellation, getBookingDetails } from '@/ai/flows/booking-flow';
 import { converse } from '@/ai/flows/assistant-flow';
 import type { BookingResponse, ConverseRequest, ConverseResponse } from '@/lib/schemas';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { bookingSchema } from '@/lib/schemas';
 import { z } from 'zod';
+import { FieldValue } from 'firebase-admin/firestore';
 
 type ClientBookingRequest = z.infer<typeof bookingSchema>;
 
@@ -21,33 +21,70 @@ export async function verifyPin(pin: string): Promise<{ success: boolean }> {
     return { success: false };
 }
 
-
 /**
- * Creates a booking by processing the input data and calling the booking flow.
+ * Creates a booking by processing the input data and saving it to Firestore.
  */
 export async function createBooking(
   input: ClientBookingRequest
 ): Promise<BookingResponse> {
     console.log('[Server Action] createBooking called with:', input);
-    const serverInput = {
-        ...input,
-        date: input.date,
+    
+    const validatedData = bookingSchema.parse(input);
+
+    const db = getAdminDb();
+    const bookingRef = db.collection('bookings').doc();
+    const bookingNumber = `MTB-${bookingRef.id.slice(0, 6).toUpperCase()}`;
+
+    const newBooking = {
+        ...validatedData,
+        bookingNumber,
+        status: 'confirmed',
+        createdAt: FieldValue.serverTimestamp(),
     };
-  return processBooking(serverInput);
+
+    await bookingRef.set(newBooking);
+    
+    console.log(`[Server Action] Booking ${bookingNumber} created successfully.`);
+
+    return {
+        bookingNumber,
+        emailSubject: `Your booking ${bookingNumber} is confirmed!`,
+        emailBody: `Thank you for booking with us. Your appointment for ${validatedData.service} on ${validatedData.date} is confirmed.`
+    };
 }
 
 /**
- * Cancels a booking by calling the cancellation flow.
+ * Cancels a booking by updating its status to 'cancelled'.
  */
 export async function cancelBooking(bookingNumber: string): Promise<void> {
-  return processCancellation(bookingNumber);
+    const db = getAdminDb();
+    const bookingsRef = db.collection('bookings');
+    const snapshot = await bookingsRef.where('bookingNumber', '==', bookingNumber).limit(1).get();
+
+    if (snapshot.empty) {
+        console.warn(`[Server Action] cancelBooking: Booking number ${bookingNumber} not found.`);
+        return;
+    }
+
+    const bookingDoc = snapshot.docs[0];
+    await bookingDoc.ref.update({ status: 'cancelled' });
+    console.log(`[Server Action] Booking ${bookingNumber} cancelled.`);
 }
 
 /**
  * Retrieves booking details by booking number.
  */
 export async function getBooking(bookingNumber: string) {
-    return getBookingDetails(bookingNumber);
+    const db = getAdminDb();
+    const bookingsRef = db.collection('bookings');
+    const snapshot = await bookingsRef.where('bookingNumber', '==', bookingNumber).limit(1).get();
+
+    if (snapshot.empty) {
+        return null;
+    }
+    
+    const bookingData = snapshot.docs[0].data();
+    return { id: snapshot.docs[0].id, ...bookingData };
 }
 
 /**
@@ -72,7 +109,6 @@ export async function getBookings() {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error: any) {
         console.error("Error fetching bookings:", error);
-        // Throw the error so the client can handle it
         throw new Error(`Failed to fetch bookings. Original error: ${error.message}`);
     }
 }
