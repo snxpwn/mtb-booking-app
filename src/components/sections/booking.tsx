@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,12 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import Section from '@/components/section';
-import { bookingSchema } from '@/lib/schemas';
-import PolicyDialog from '@/components/policy-dialog';
-import BookingLoader from '@/components/booking-loader';
+
+const bookingSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(1, 'Phone number is required'),
+  service: z.string().min(1, 'Please select a service'),
+  date: z.string().min(1, 'Please select a date'),
+});
 
 type BookingFormData = z.infer<typeof bookingSchema>;
 
@@ -43,8 +46,6 @@ const services = [
 export default function BookingSection() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPolicy, setShowPolicy] = useState(false);
-  const [formData, setFormData] = useState<BookingFormData | null>(null);
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
@@ -52,22 +53,12 @@ export default function BookingSection() {
       name: '',
       email: '',
       phone: '',
-      postcode: '',
       service: '',
       date: '',
-      notes: '',
     },
   });
 
-  function onFormSubmit(data: BookingFormData) {
-    setFormData(data);
-    setShowPolicy(true);
-  }
-
-  async function handleAcceptPolicy() {
-    setShowPolicy(false);
-    if (!formData) return;
-
+  async function onSubmit(data: BookingFormData) {
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/booking', {
@@ -75,198 +66,129 @@ export default function BookingSection() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create booking.');
+        throw new Error('Failed to create booking.');
       }
-
-      const result = await response.json();
-      console.log('API response:', result);
 
       toast({
         title: 'Booking Request Sent!',
         description: "Thank you for your booking. We'll be in touch shortly to confirm.",
       });
       form.reset();
-      setFormData(null);
-    } catch (error: any) {
-      console.error('Error processing booking:', error);
+    } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem submitting your booking. Please try again.',
+        description: 'There was a problem submitting your booking. Please try again.',
       });
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  function handleDeclinePolicy() {
-    setShowPolicy(false);
-    setFormData(null);
-    toast({
-      variant: 'destructive',
-      title: "We're sorry to see you go!",
-      description: "We can't continue with the booking until you agree to the policy.",
-    });
-  }
-
   return (
-    <>
-      <Section id="booking">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
-              Book an Appointment
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Fill out the form below to request an appointment.
-            </p>
-          </div>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onFormSubmit)}
-              className="space-y-6"
-            >
-              <div className="space-y-4">
-                 <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="your.email@example.com"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your contact number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="postcode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Postcode</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. WD17 1DA" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-               <div className="space-y-4 pt-4">
-                <FormField
-                  control={form.control}
-                  name="service"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Service</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a service" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {services.map(service => (
-                            <SelectItem key={service.id} value={service.name}>
-                              {service.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Additional Notes</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Anything else you'd like to add?"
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full font-semibold"
-                disabled={isSubmitting}
-              >
-                Request Booking
-              </Button>
-            </form>
-          </Form>
+    <Section id="booking">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
+            Book an Appointment
+          </h2>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Fill out the form below to request an appointment.
+          </p>
         </div>
-      </Section>
-      <PolicyDialog
-        open={showPolicy}
-        onAccept={handleAcceptPolicy}
-        onDecline={handleDeclinePolicy}
-        onOpenChange={setShowPolicy}
-      />
-      {isSubmitting && <BookingLoader />}
-    </>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="your.email@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your contact number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="service"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a service" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {services.map(service => (
+                        <SelectItem key={service.id} value={service.name}>
+                          {service.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full font-semibold"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Request Booking'}
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </Section>
   );
 }

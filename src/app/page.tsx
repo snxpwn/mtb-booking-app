@@ -7,7 +7,6 @@ import SocialSection from "@/components/sections/social";
 import BookingSection from "@/components/sections/booking";
 import Footer from "@/components/footer";
 import ChatBubble from "@/components/chat-bubble";
-import BookingCancellationSection from "@/components/sections/booking-cancellation";
 import PolicySection from "@/components/sections/policy";
 
 export default function Home() {
@@ -22,7 +21,6 @@ export default function Home() {
         <ReviewsSection />
         <SocialSection />
         <BookingSection />
-        <BookingCancellationSection />
       </main>
       <Footer />
       <ChatBubble />
