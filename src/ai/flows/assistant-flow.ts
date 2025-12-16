@@ -7,7 +7,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import {
-  BookingRequestSchema,
   ConverseRequestSchema,
   ConverseResponseSchema,
   MessageSchema,
@@ -15,7 +14,6 @@ import {
   type ConverseResponse,
   type Message,
 } from '@/lib/schemas';
-import { processBooking, getBookingDetails, processCancellation } from './booking-flow';
 import { format } from 'date-fns';
 
 // Helper to get business policy information
@@ -81,78 +79,7 @@ const getServiceInfo = ai.defineTool(
   }
 );
 
-// Tool to create a booking
-const createBookingTool = ai.defineTool(
-    {
-        name: 'createBookingTool',
-        description: 'Use this tool to finalize and create a new booking appointment when you have all the required information.',
-        inputSchema: BookingRequestSchema.omit({ date: true }).extend({
-          date: z.string().describe("The desired date for the appointment, formatted as a string like 'Dec 25, 2025'"),
-        }),
-        outputSchema: z.object({ bookingNumber: z.string() }),
-    },
-    async (input) => {
-        const response = await processBooking({ ...input });
-        return { bookingNumber: response.bookingNumber };
-    }
-);
-
-// Tool to check booking details
-const getBookingDetailsTool = ai.defineTool({
-    name: 'getBookingDetailsTool',
-    description: 'Retrieves the details of an existing booking using the booking number.',
-    inputSchema: z.object({ bookingNumber: z.string() }),
-    outputSchema: z.object({
-        details: z.string(),
-        isCancellable: z.boolean(),
-    }),
-}, async ({ bookingNumber }) => {
-    const booking = await getBookingDetails(bookingNumber);
-    if (!booking) {
-        return { details: `I couldn't find a booking with the number ${bookingNumber}. Please check the number and try again.`, isCancellable: false };
-    }
-    const detailsString = `Booking #${booking.bookingNumber} for ${booking.service} on ${booking.date}.`;
-    return { details: detailsString, isCancellable: booking.status !== 'cancelled' };
-});
-
-// Tool to cancel a booking
-const cancelBookingTool = ai.defineTool({
-    name: 'cancelBookingTool',
-    description: 'Cancels a booking using the booking number.',
-    inputSchema: z.object({ bookingNumber: z.string() }),
-    outputSchema: z.string(),
-},
-async ({ bookingNumber }) => {
-    try {
-        await processCancellation(bookingNumber);
-        return `Your booking #${bookingNumber} has been successfully cancelled. A confirmation email has been sent.`;
-    } catch (error: any) {
-        return `There was an error cancelling booking #${bookingNumber}. The booking may not exist or has already been cancelled.`;
-    }
-});
-
-const createEnquiryRedirectTool = ai.defineTool({
-    name: 'createEnquiryRedirectTool',
-    description: 'Creates a WhatsApp redirect link for a user to make an enquiry about a specific booking.',
-    inputSchema: z.object({ bookingNumber: z.string() }),
-    outputSchema: z.string(),
-},
-async ({ bookingNumber }) => {
-    const booking = await getBookingDetails(bookingNumber);
-    if (!booking) {
-        return `I couldn't find a booking with the number ${bookingNumber}. Please check the number and try again.`;
-    }
-    const whatsAppNumber = process.env.BUSINESS_CONTACT || "447438289674"; 
-    if (!whatsAppNumber) {
-        return "I'm sorry, I can't create a WhatsApp link right now. Please contact us directly.";
-    }
-    const message = `Hi, my name is ${booking.name}, these are my booking details: Booking #${booking.bookingNumber} for ${booking.service} on ${booking.date}.`;
-    const encodedMessage = encodeURIComponent(message);
-    return `https://wa.me/${whatsAppNumber}?text=${encodedMessage}`;
-});
-
-
-const assistantPrompt = `You are a friendly and professional AI assistant for '${process.env.BUSINESS_NAME}', a beautician specializing in eyelash services.\nYour persona is helpful, polite, and efficient. Use emojis to make the conversation feel warm and friendly ✨.\n\nYour primary tasks are:\n1.  **Answer Questions**: Use the provided tools to answer questions about services (Classic, Hybrid, Volume lashes, Infills, Removal) and business policies (cancellations, deposits, lateness).\n2.  **Manage Bookings**:\n    - **Create Bookings**: Guide the user to provide all necessary information: full name, email, phone number, postcode, desired service, and desired date. Once you have all details, you MUST use the \`createBookingTool\`.\n    - **Check Bookings**: If a user asks about their booking, ask for their booking number and use the \`getBookingDetailsTool\`.\n    - **Cancel Bookings**: If a user wants to cancel, ask for their booking number. Use the \`getBookingDetailsTool\` to verify the booking. If it exists, confirm with the user that they want to cancel that specific appointment. If they confirm, THEN use the \`cancelBookingTool\`.\n    - **Handle Enquiries about Bookings**: If a user wants to make an enquiry or change their appointment, ask for their booking number and use the \`createEnquiryRedirectTool\` to generate a WhatsApp link for them to continue the conversation.\n3.  **Service Recommendations**: If a user asks for advice (e.g., "what lashes should I get?"), use the \`getServiceInfo\` tool with the \`recommendationQuery\` to provide a recommendation.\n\n**Conversation Flow Rules:**\n- Be conversational. Don't just fire questions. For example, say "Of course, I can help with that! To get started, could I get your full name please?"\n- When asking for booking details, ask for one piece of information at a time to avoid overwhelming the user.\n- Before creating or cancelling a booking, ALWAYS confirm with the user. For example: "Just to confirm, you want to book Hybrid Lashes for this Tuesday. Is that correct?" or "I found your booking for Classic Lashes. Are you sure you want to cancel it?"\n- If you don't understand, ask for clarification.\n- If a booking is successfully created or cancelled, end the conversation by saying the action is complete and a confirmation email has been sent.\n- When providing a WhatsApp link, present it clearly to the user. For example: "No problem, please use this link to chat with us on WhatsApp about your booking: [link]"\n\nServices available: Classic Lashes, Hybrid Lashes, Volume Lashes, Infill, Lash Removal.\n`;
+const assistantPrompt = `You are a friendly and professional AI assistant for '${process.env.BUSINESS_NAME}', a beautician specializing in eyelash services.\nYour persona is helpful, polite, and efficient. Use emojis to make the conversation feel warm and friendly ✨.\n\nYour primary tasks are:\n1.  **Answer Questions**: Use the provided tools to answer questions about services (Classic, Hybrid, Volume lashes, Infills, Removal) and business policies (cancellations, deposits, lateness).\n2.  **Service Recommendations**: If a user asks for advice (e.g., "what lashes should I get?"), use the \`getServiceInfo\` tool with the \`recommendationQuery\` to provide a recommendation.\n\n**Conversation Flow Rules:**\n- Be conversational. Don't just fire questions. For example, say "Of course, I can help with that! What can I help you with today?"\n- If you don't understand, ask for clarification.\n`;
 
 // Define the shape that ai.generate expects
 type ApiChatMessage = {
@@ -186,32 +113,16 @@ const assistantFlow = ai.defineFlow(
 
     const result = await ai.generate({
       model: 'googleai/gemini-2.0-flash',
-      messages: messages, // Use the correctly formatted messages
-      tools: [getPolicyInfo, getServiceInfo, createBookingTool, getBookingDetailsTool, cancelBookingTool, createEnquiryRedirectTool],
+      messages: messages,
+      tools: [getPolicyInfo, getServiceInfo],
       config: { temperature: 0.9 }
     });
 
-    let replyText = result.text || ""; // Initialize replyText to an empty string if result.text is undefined
-    const toolCalls = result.output?.message.toolCalls;
-
-    let bookingNumber: string | undefined;
-    if (toolCalls) {
-        for (const call of toolCalls) {
-            if (call.toolName === 'createBookingTool') {
-                const toolOutput = call.output as { bookingNumber: string };
-                bookingNumber = toolOutput.bookingNumber;
-                break;
-            } else if (call.toolName === 'createEnquiryRedirectTool') {
-                const toolOutput = call.output as string; // The output of this tool is the WhatsApp URL string
-                replyText = `No problem, please use this link to chat with us on WhatsApp about your booking: ${toolOutput}`;
-                break; // Assuming only one tool call for this response
-            }
-        }
-    }
+    let replyText = result.text || "";
 
     return {
         reply: replyText,
-        bookingNumber: bookingNumber
+        bookingNumber: undefined
     };
   }
 );
